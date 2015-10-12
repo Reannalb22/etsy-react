@@ -66,10 +66,38 @@
  * GENERAL
  */
 
-img {
-    max-width: 100%;
-}
 /**
  * YOUR CODE HERE
  */
+
+
+
+ #container {
+    text-align: center;
+    background-color: #DEB887;
+
+
+    p#title {
+        font-family: 'Lobster', cursive;
+        width: 100%;
+        margin: 0;
+        font-size: 55px;
+        text-align: center;
+        background-color: #fffacd;
+    }
+
+    input {
+        width: 50%;
+        height: 50px;
+        font-size: 25px;
+        text-align: center;
+        margin: 15px;
+    }
+
+    img {
+        width: 18%;
+        margin: 10px; 
+    }
+}
+
 
