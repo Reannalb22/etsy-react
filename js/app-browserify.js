@@ -10,23 +10,16 @@ var $ = require('jquery'),
 console.log('all loaded up')
 
 var HomeView = React.createClass({
+
+
 	render: function(){
+	console.log(this)
 	return (
 		<div>
 			<TitleBar />
 			<SearchBar />
-			<ListingBox products = {this.props.products}/>
+			<ListingsBox collection = {this.props.collection}/>
 		</div>
-		)
-	}
-})
-
-var DetailsView = React.createClass({
-	render: function(){
-		return(
-			<div>
-				<Details products = {this.props.products}/>
-			</div>
 		)
 	}
 })
@@ -52,56 +45,73 @@ var SearchBar = React.createClass({
 	}
 })
 
+var Listing = React.createClass({
 
+	render:function(){
+		console.log('data console')
+		console.log(this.props.model)
+		var theSource
+		if (this.props.model.attributes.MainImage) { // if we do have an image
+			theSource = this.props.model.attributes.MainImage.url_170x135
+		}
+		else theSource = "http://33.media.tumblr.com/avatar_bfee0d75c453_128.png" 
 
-var ListingBox = React.createClass({
+		return(
+			<div>
+				<img src={theSource} />
+			</div>
+			)
+		}
+})
+
+var ListingsBox = React.createClass({
 	
-
-	_genListings: function(product){
+	_genListing: function(product){
 		console.log(product)
 		console.log('ze product console log is above')
+		console.log(product.attributes)
+		
 		return(
-			<img src= {product.attributes.MainImage.url_170x135} />
+			<Listing model={product} name="reanna" />
 		)
 	},
 
+	// var john = new Student({'hobby':'studying'})
+
 	render: function(){
 
-		var products = this.props.products
+		var models = this.props.collection.models
 
 		return(
 			<p>
-				{products.map(this._genListings)}
+				{models.map(this._genListing)}
 			</p>
 		)	
 	}
 })
 
+
+var DetailsView = React.createClass({
+	render: function(){
+		console.log('here comes product in the DetailsView')
+		console.log(this)
+		return(
+			<div>
+				<Details model = {this.props.model} />
+			</div>
+		)
+	}
+})
+
 var Details = React.createClass({
 
-
-	_genDetails : function(product){
-		console.log(product)
-		console.log('detail product console is above')
-		// return (
-		// 	<img src = {product.attributes.MainImage.url_170x135} />
-		// 	<p> {product.attributes.price}</p>
-
-		// 	)
-
-	},
-	
 	render: function(){
-		var products = this.props.products
-		console.log(products)
-		console.log('logging products in render')
-		productImg = this.props.products.attributes.MainImage.url_170x135,
-		price = this.props.products.attributes.price,
-		description = this.props.products.attributes.description
+		// var productImg = this.props.model.attributes.results.MainImage.url_170x135,
+		var	price = this.props.model.attributes.results[0].price,
+			description = this.props.model.attributes.results[0].description
 		
 		return(
 			<div>
-				<img src = {productImg} />
 				<p> {price} </p>
 				<p> {description} </p>
 			</div>
@@ -109,6 +119,7 @@ var Details = React.createClass({
 	}	
 })
 
+// example_shop_id = 5901338
 
 
 //-----------------COLLECTION----------------------------
@@ -121,7 +132,7 @@ var etsyCollection = Backbone.Collection.extend({
 		var startingArray = responseData.results
 		console.log(responseData)
 		return startingArray
-	}
+	} 
 })
 
 
@@ -130,12 +141,12 @@ var etsyCollection = Backbone.Collection.extend({
 var etsyModel = Backbone.Model.extend({
 	
 	url: 'https://openapi.etsy.com/v2/listings',
-	apiKey:'3w2bktapp0baml9j70tm7rca',
+	apiKey:'3w2bktapp0baml9j70tm7rca'
 		
-	parse: function(responseData){
-		var singleListing = responseData.results[0]
-		return singleListing
-	}
+	// parse: function(responseData){
+	// 	var singleListing = responseData.results
+	// 	return singleListing
+	// }
 })
 
 //-----------------ROUTER-----------------------
@@ -143,7 +154,7 @@ var EtsyRouter = Backbone.Router.extend({
 	
 	routes:{
 		'home': 'getHome',
-		'details': 'getDetails'
+		'details/:Shop_Id': 'getDetails'
 	},
 		// '*anythingElse': 'runDefault'},
 
@@ -152,43 +163,40 @@ var EtsyRouter = Backbone.Router.extend({
 			deferredObj = this.ec.fetch({
 				data: {
 					api_key: self.ec.apiKey,
-					includes: 'MainImage'
-					// includes: 'Shop'
+					includes: 'MainImage,Shop'
 				},
 				processData: true,
 				dataType: 'jsonp'
 				})
-		location.hash = '#home'
+		// location.hash = '#home'
 		return deferredObj
 	},
 
-	getDetailData: function(listing_id){
+	getDetailData: function(Shop_id){
 		var self = this,
 		deferredObj = this.em.fetch ({
-			url: `${this.em.url}/${listing_id}/.js`,
+			url: `${this.em.url}/${Shop_id}/.js`,
 			data: {
 				api_key: self.em.apiKey,
-				includes: 'MainImage'
-				// includes: 'Shop'
+				includes: 'MainImage,Shop'
 			},
 			processData: true,
 			dataType: 'jsonp'
 		})
-		location.hash = '#details'
+		// location.hash = '#details'
 		return deferredObj
 	},
 		
 
 	renderApp: function(){
 		console.log('routingggg')
-		React.render(<HomeView products={this.ec}/>, document.querySelector('#container'))
+		React.render(<HomeView collection={this.ec}/>, document.querySelector('#container'))
 
 	},
 
 	renderDetail: function(){
 		console.log('rendering details')
-		React.render(<DetailsView products={this.em}/>, document.querySelector('#container'))
-		console.log(products)
+		React.render(<DetailsView model={this.em}/>, document.querySelector('#container'))
 		
 	},
 
@@ -204,11 +212,15 @@ var EtsyRouter = Backbone.Router.extend({
 		deferredObj.done(boundRender)
 	},
 
-	getDetails: function(){
+	getDetails: function(Shop_id){
 		var boundRender = this.renderDetail.bind(this)
-
-		var deferredObj = this.getDetailData()
-		deferredObj.done(boundRender)
+		var self = this
+		var deferredObj = this.getDetailData(Shop_id)
+		deferredObj.done(function(){
+			console.log('here comes the model in the done callback')
+			console.log(self.em)
+			boundRender()
+		})
 	},
 
 
@@ -241,5 +253,43 @@ var etsy = new EtsyRouter()
 // })
 
 
+
+//making into separate images???  
+
+// var Listing=React.createClass({
+// 	render:function(){
+// 		console.log(this.props.data)
+// 		return(
+// 			<div>
+// 				<img src={this.props.data.MainImage.url_170x135} />
+// 			</div>
+// 			)
+// 		}
+// })
+
+// var ListingsBox = React.createClass({
+	
+
+// 	_genListing: function(product){
+// 		console.log(product)
+// 		console.log('ze product console log is above')
+// 		console.log(product.attributes)
+		
+// 		return(
+// 			<Listing data={product}/>
+// 		)
+// 	},
+
+// 	render: function(){
+
+// 		var products = this.props.products
+
+// 		return(
+// 			<p>
+// 				{products.map(this._genListing)}
+// 			</p>
+// 		)	
+// 	}
+// })
 
 
