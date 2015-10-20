@@ -87,7 +87,7 @@
     }
 
     input {
-        width: 50%;
+        width: 70%;
         height: 50px;
         font-size: 25px;
         text-align: center;
@@ -96,8 +96,13 @@
 
     img {
         display: inline-block;
-        width: 18%;
+        width: 40%;
         margin: 10px; 
+    }
+
+    #favoriteButton {
+        height: 30px;
+        width: 30px;
     }
 }
 

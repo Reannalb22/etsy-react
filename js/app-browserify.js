@@ -5,121 +5,14 @@ let fetch = require('./fetcher')
 
 var $ = require('jquery'),
 	Backbone = require('backbone'),
-	React = require('react')
+	React = require('react'),
+	Parse = require('parse')
 
 console.log('all loaded up')
 
-var HomeView = React.createClass({
+import HomeView from "./HomeView.js"
+// import DetailsView from "./Details.js"
 
-
-	render: function(){
-	console.log(this)
-	return (
-		<div>
-			<TitleBar />
-			<SearchBar />
-			<ListingsBox collection = {this.props.collection}/>
-		</div>
-		)
-	}
-})
-
-
-var TitleBar = React.createClass({
-
-	render: function(){
-		return (
-			<p id="title"> Etsy </p>
-		)
-	}
-})
-
-
-
-var SearchBar = React.createClass({
-
-	render: function(){
-		return(
-			<input type="text" placeholder="Search Handmade Products"/>
-		)
-	}
-})
-
-var Listing = React.createClass({
-
-	render:function(){
-		console.log('data console')
-		console.log(this.props.model)
-		var theSource
-		if (this.props.model.attributes.MainImage) { // if we do have an image
-			theSource = this.props.model.attributes.MainImage.url_170x135
-		}
-		else theSource = "http://33.media.tumblr.com/avatar_bfee0d75c453_128.png" 
-
-		return(
-			<div>
-				<img src={theSource} />
-			</div>
-			)
-		}
-})
-
-var ListingsBox = React.createClass({
-	
-	_genListing: function(product){
-		console.log(product)
-		console.log('ze product console log is above')
-		console.log(product.attributes)
-		
-		return(
-			<Listing model={product} name="reanna" />
-		)
-	},
-
-	// var john = new Student({'hobby':'studying'})
-
-	render: function(){
-
-		var models = this.props.collection.models
-
-		return(
-			<p>
-				{models.map(this._genListing)}
-			</p>
-		)	
-	}
-})
-
-
-var DetailsView = React.createClass({
-	render: function(){
-		console.log('here comes product in the DetailsView')
-		console.log(this)
-		return(
-			<div>
-				<Details model = {this.props.model} />
-			</div>
-		)
-	}
-})
-
-var Details = React.createClass({
-
-	render: function(){
-		// var productImg = this.props.model.attributes.results.MainImage.url_170x135,
-		var	price = this.props.model.attributes.results[0].price,
-			description = this.props.model.attributes.results[0].description
-		
-		return(
-			<div>
-				<p> {price} </p>
-				<p> {description} </p>
-			</div>
-		)
-	}	
-})
-
-// example_shop_id = 5901338
 
 
 //-----------------COLLECTION----------------------------
@@ -143,20 +36,21 @@ var etsyModel = Backbone.Model.extend({
 	url: 'https://openapi.etsy.com/v2/listings',
 	apiKey:'3w2bktapp0baml9j70tm7rca'
 		
-	// parse: function(responseData){
-	// 	var singleListing = responseData.results
-	// 	return singleListing
-	// }
 })
 
 //-----------------ROUTER-----------------------
 var EtsyRouter = Backbone.Router.extend({
 	
 	routes:{
-		'home': 'getHome',
-		'details/:Shop_Id': 'getDetails'
-	},
-		// '*anythingElse': 'runDefault'},
+		
+		'search/:keywords': 'showSearch',
+		'details/:listing_id': 'getDetails',
+		'favorites': 'showFavorites',
+		'home': 'getHome'
+		// 'login': 'showLogIn',
+		// 'signup': 'showSignUp'
+		},
+		
 
 	getData: function(){
 		var self = this,
@@ -172,10 +66,10 @@ var EtsyRouter = Backbone.Router.extend({
 		return deferredObj
 	},
 
-	getDetailData: function(Shop_id){
+	getDetailData: function(listing_id){
 		var self = this,
 		deferredObj = this.em.fetch ({
-			url: `${this.em.url}/${Shop_id}/.js`,
+			url: `${this.em.url}/${listing_id}/.js`,
 			data: {
 				api_key: self.em.apiKey,
 				includes: 'MainImage,Shop'
@@ -184,6 +78,20 @@ var EtsyRouter = Backbone.Router.extend({
 			dataType: 'jsonp'
 		})
 		// location.hash = '#details'
+		return deferredObj
+	},
+
+	getSearchResults: function(keyword){
+		var self = this,
+		deferredObj = this.ec.fetch({
+			data: {
+				keywords: keyword,
+				api_key: this.ec.apiKey,
+				includes: 'MainImage,Shop'
+			},
+			processData: true,
+			dataType: 'jsonp'
+		})
 		return deferredObj
 	},
 		
@@ -200,9 +108,9 @@ var EtsyRouter = Backbone.Router.extend({
 		
 	},
 
-	// runDefault: function(){
-	// 	location.hash = "home"
-	// },
+	runDefault: function(){
+		location.hash = "home"
+	},
 
 	getHome: function(){
 
@@ -212,10 +120,10 @@ var EtsyRouter = Backbone.Router.extend({
 		deferredObj.done(boundRender)
 	},
 
-	getDetails: function(Shop_id){
+	getDetails: function(listing_id){
 		var boundRender = this.renderDetail.bind(this)
 		var self = this
-		var deferredObj = this.getDetailData(Shop_id)
+		var deferredObj = this.getDetailData(listing_id)
 		deferredObj.done(function(){
 			console.log('here comes the model in the done callback')
 			console.log(self.em)
@@ -223,6 +131,30 @@ var EtsyRouter = Backbone.Router.extend({
 		})
 	},
 
+	showSearch: function(keyword){
+		var boundRender = this.renderApp.bind(this)
+		var self = this
+		var deferredObj = this.getSearchResults(keyword)
+		deferredObj.done(boundRender)
+	},
+
+	showFavorites: function(){
+		var query = new Parse.Query("Listing")
+		query.find().then(this.renderFavorites.bind(this))
+	},
+
+	renderFavorites: function(responseData){
+		console.log(responseData)
+		React.render(<FavoritesView listings={responseData}/>, document.querySelector('#container'))
+	},
+
+	// showLogIn: function(){
+
+	// },
+
+	// showSignUp: function(){
+
+	// },
 
 	initialize: function(){
 		location.hash = "home"
@@ -234,8 +166,123 @@ var EtsyRouter = Backbone.Router.extend({
 
 var etsy = new EtsyRouter()
 
+////////////////////////////////////////////////////////
 
-//AJAX Version (if not using Backbone):
+var APP_ID = 'c4PIFD1Bz4mMk8VrgNd1lmEtisFwDBdNGViVY0lv',
+	JS_KEY = 'kl9qSSHjhdgGY496DFTwl4f39IL8Owv22SypRAxE'
+
+Parse.initialize(APP_ID, JS_KEY)
+
+// var logInView = React.createClass({
+
+// })
+
+// var signupView = React.createClass({
+
+// })
+
+
+var DetailsView = React.createClass({
+
+	render: function(){
+		console.log('here comes product in the DetailsView')
+		console.log(this)
+		return(
+			<div>
+				<Details model = {this.props.model} />
+			</div>
+		)
+	}
+})
+
+var Details = React.createClass({
+
+	render: function(){
+		// var productImg = this.props.model.attributes.results.MainImage.url_170x135,
+		var	price = this.props.model.attributes.results[0].price,
+			description = this.props.model.attributes.results[0].description
+		var theSource
+		if (this.props.model.attributes.results[0].MainImage) { // if we do have an image
+			theSource = this.props.model.attributes.results[0].MainImage.url_170x135
+		}
+		else theSource = "http://33.media.tumblr.com/avatar_bfee0d75c453_128.png" 
+
+		return(
+			<div>
+				<img src = {theSource} id="detailImg"/>
+				<Favorites listingData = {this.props.model.attributes.results[0]}/>
+				<p> ${price} </p>
+				<p> {description} </p>
+			</div>
+		)
+	}	
+})
+
+var Favorites = React.createClass({
+	_clickHandler: function(e){
+		var listingObj = this.props.listingData
+		var db_listing = new Parse.Object('Listing')
+			window.listing = this
+			for(var prop in listingObj){
+				db_listing.set(prop,listingObj[prop])
+			}
+			db_listing.save().then(function(){alert('Favorited!')})
+		},
+
+	render: function(){
+		return(
+			<div>
+				<input type = "image" src = 'images/favorites.png' onClick = {this._clickHandler} id="favoriteButton" />
+			</div>
+		)
+	}
+})
+
+var FavoritesView = React.createClass({
+	render: function(){
+		return(
+			<ListingsBox listing = {this.props.listings}/>
+		)
+	}
+})
+
+var ListingsBox = React.createClass({
+	
+	_genListing: function(product){
+		
+		return(
+			<Listing listingData={product} />
+		)
+	},
+
+	// var john = new Student({'hobby':'studying'})
+
+	render: function(){
+
+		var models = this.props.listing
+
+		return(
+			<p>
+				{models.map(this._genListing)}
+			</p>
+		)	
+	}
+})
+
+var Listing = React.createClass({
+	
+	render: function(){
+		return(
+			<div>
+				<p>{this.props.listingData.get("title")}</p>
+				<img src = {this.props.listingData.get("MainImage").url_170x135}/>
+			</div>
+		)
+	}
+})
+
+
+// AJAX Version (if not using Backbone):
 
 // var deferredObj = $.ajax({
 // 	url: 'https://openapi.etsy.com/v2/listings/active.js',
@@ -252,44 +299,5 @@ var etsy = new EtsyRouter()
 // 	React.render(<HomeView products = {data.results} />, document.querySelector('#container'))
 // })
 
-
-
-//making into separate images???  
-
-// var Listing=React.createClass({
-// 	render:function(){
-// 		console.log(this.props.data)
-// 		return(
-// 			<div>
-// 				<img src={this.props.data.MainImage.url_170x135} />
-// 			</div>
-// 			)
-// 		}
-// })
-
-// var ListingsBox = React.createClass({
-	
-
-// 	_genListing: function(product){
-// 		console.log(product)
-// 		console.log('ze product console log is above')
-// 		console.log(product.attributes)
-		
-// 		return(
-// 			<Listing data={product}/>
-// 		)
-// 	},
-
-// 	render: function(){
-
-// 		var products = this.props.products
-
-// 		return(
-// 			<p>
-// 				{products.map(this._genListing)}
-// 			</p>
-// 		)	
-// 	}
-// })
 
 
