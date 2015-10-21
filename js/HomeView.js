@@ -56,7 +56,7 @@ var FavoriteItems = React.createClass({
 
 	render: function(){
 		return (
-			<button onClick = {this._clickHandler} >See My Favorites</button>
+			<button onClick = {this._clickHandler} id="seeMyFavorites" >See My Favorites</button>
 		)
 	}
 })

@@ -203,7 +203,7 @@ var Details = React.createClass({
 			description = this.props.model.attributes.results[0].description
 		var theSource
 		if (this.props.model.attributes.results[0].MainImage) { // if we do have an image
-			theSource = this.props.model.attributes.results[0].MainImage.url_170x135
+			theSource = this.props.model.attributes.results[0].MainImage.url_570xN
 		}
 		else theSource = "http://33.media.tumblr.com/avatar_bfee0d75c453_128.png" 
 
@@ -232,7 +232,7 @@ var Favorites = React.createClass({
 	render: function(){
 		return(
 			<div>
-				<input type = "image" src = 'images/favorites.png' onClick = {this._clickHandler} id="favoriteButton" />
+				<input type = "image" src = 'images/favorites.png' onClick = {this._clickHandler} id="favorite" />
 			</div>
 		)
 	}
