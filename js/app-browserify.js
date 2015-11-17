@@ -196,6 +196,10 @@ var DetailsView = React.createClass({
 })
 
 var Details = React.createClass({
+	_clickHandler:function(){
+		location.hash = 'home'
+	},
+
 
 	render: function(){
 		// var productImg = this.props.model.attributes.results.MainImage.url_170x135,
@@ -209,6 +213,7 @@ var Details = React.createClass({
 
 		return(
 			<div>
+				<input type = "image" src = 'images/back.png' onClick = {this._clickHandler} id="back" />
 				<img src = {theSource} id="detailImg"/>
 				<Favorites listingData = {this.props.model.attributes.results[0]}/>
 				<p> ${price} </p>

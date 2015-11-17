@@ -105,9 +105,9 @@ var ListingsBox = React.createClass({
 		var models = this.props.collection.models
 
 		return(
-			<p>
+			<div>
 				{models.map(this._genListing)}
-			</p>
+			</div>
 		)	
 	}
 })
